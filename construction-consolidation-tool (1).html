@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Flash Workbook Consolidation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .secondary-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .secondary-btn:hover {
+            background: #cbd5e0;
+        }
+        
+        .success-btn {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .success-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+            max-height: 600px;
+            overflow: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #f7fafc;
+            color: #2d3748;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background-color: #f7fafc;
+        }
+        
+        .status-open {
+            background-color: #fed7d7;
+            color: #742a2a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-closed {
+            background-color: #c6f6d5;
+            color: #22543d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-ongoing {
+            background-color: #fefcbf;
+            color: #744210;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-wip {
+            background-color: #bee3f8;
+            color: #2c5282;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pastdue {
+            background-color: #e53e3e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .info-box {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #234e52;
+        }
+        
+        .warning-box {
+            background: #fffaf0;
+            border: 1px solid #feb2b2;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #742a2a;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tab:hover:not(.active) {
+            background: #cbd5e0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Construction Flash Workbook Consolidation</h1>
+        <div class="subtitle">Automated consolidation tool for construction project tracking</div>
+    </div>
+    
+    <div class="controls">
+        <div class="info-box">
+            <strong>Instructions:</strong> Upload the Construction Biweekly Flash Workbook to automatically generate:
+            <ul>
+                <li><strong>Master Sheet:</strong> Consolidated data with all project information</li>
+                <li><strong>Action Tracker:</strong> Detailed action items with owners and status tracking</li>
+            </ul>
+        </div>
+        
+        <div class="button-group">
+            <label for="fileInput" class="file-label">
+                📁 Upload Excel File
+            </label>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" />
+            <button class="success-btn" onclick="processFile()" id="processBtn" style="display:none;">
+                ⚙️ Process Workbook
+            </button>
+            <button class="secondary-btn" onclick="downloadConsolidated()" id="downloadBtn" style="display:none;">
+                📥 Download Consolidated File
+            </button>
+        </div>
+        
+        <div id="statsContainer" class="stats-grid hidden">
+            <div class="stat-card">
+                <div class="stat-value" id="totalSites">0</div>
+                <div class="stat-label">Total Sites</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalProjects">0</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="openActions">0</div>
+                <div class="stat-label">Open Actions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="missingPhasing">0</div>
+                <div class="stat-label">Missing Phasing Plans</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="resultContainer" class="hidden">
+        <div class="tab-container">
+            <div class="tab active" onclick="showTab('master')">Master Sheet</div>
+            <div class="tab" onclick="showTab('actions')">Action Tracker</div>
+        </div>
+        
+        <div id="masterSheet" class="table-container">
+            <h3>Master Consolidated Sheet</h3>
+            <div id="masterTableContainer"></div>
+        </div>
+        
+        <div id="actionsSheet" class="table-container hidden">
+            <h3>Action Tracker Sheet</h3>
+            <div id="actionsTableContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let workbookData = null;
+        let consolidatedData = {
+            masterSheet: [],
+            actionTracker: []
+        };
+        
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('processBtn').style.display = 'inline-block';
+            }
+        });
+        
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (tabName === 'master') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('masterSheet').classList.remove('hidden');
+                document.getElementById('actionsSheet').classList.add('hidden');
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('masterSheet').classList.add('hidden');
+                document.getElementById('actionsSheet').classList.remove('hidden');
+            }
+        }
+        
+        function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                workbookData = workbook;
+                
+                // Process the workbook
+                consolidateData(workbook);
+                
+                // Show results
+                document.getElementById('resultContainer').classList.remove('hidden');
+                document.getElementById('downloadBtn').style.display = 'inline-block';
+                document.getElementById('statsContainer').classList.remove('hidden');
+                
+                // Display the data
+                displayMasterSheet();
+                displayActionTracker();
+                updateStats();
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function consolidateData(workbook) {
+            // Get data from required sheets
+            const rampPlansData = getSheetData(workbook, '2025 Ramp Plans - Upcoming Cons');
+            const actionTrackerData = getSheetData(workbook, 'Updated Action Tracker');
+            const riskReasonsData = getSheetData(workbook, 'Risk Reasons');
+            
+            // Create lookup maps
+            const rampPlansMap = createRampPlansMap(rampPlansData);
+            const actionTrackerMap = createActionTrackerMap(actionTrackerData);
+            const riskReasonsMap = createRiskReasonsMap(riskReasonsData);
+            
+            // Get all unique sites
+            const allSites = [...new Set([
+                ...Object.keys(rampPlansMap),
+                ...Object.keys(actionTrackerMap),
+                ...Object.keys(riskReasonsMap)
+            ])].filter(site => site && site !== 'undefined');
+            
+            // Create Master Sheet
+            consolidatedData.masterSheet = [
+                ['Site', 'Project Code', 'Details & Impact', 'Risk', 'Engineering Lead', 'ATS Launch', 
+                 'Regional Planner', 'Phasing Plan', 'Capacity Impact', 'Ramp Plan']
+            ];
+            
+            // Create Action Tracker Sheet
+            consolidatedData.actionTracker = [
+                ['Sites', 'Project Code', 'Construction Start', 'Go-live', 'Regional Planner', 
+                 'Details & Impact', 'Open Actions', 'Status', 'Owner', 'Additional Information']
+            ];
+            
+            // Process each site
+            allSites.forEach(site => {
+                processSiteForMasterSheet(site, rampPlansMap, actionTrackerMap, riskReasonsMap);
+                processSiteForActionTracker(site, rampPlansMap, actionTrackerMap, riskReasonsMap);
+            });
+        }
+        
+        function getSheetData(workbook, sheetName) {
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) return [];
+            return XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+        }
+        
+        function createRampPlansMap(data) {
+            const map = {};
+            const rows = data.slice(1).filter(row => row && row[0]);
+            
+            rows.forEach(row => {
+                const site = row[0];
+                if (!map[site]) map[site] = [];
+                
+                map[site].push({
+                    projectCode: row[2],
+                    engineeringLead: row[3],
+                    atsLaunch: row[4],
+                    constructionStart: row[5],
+                    goLive: row[8],
+                    regionalPlanner: row[10],
+                    phasingPlan: row[11],
+                    capacityImpact: row[12],
+                    rampPlan: row[13],
+                    consolidatedNotes: row[14],
+                    capacityImpactNeedDate: row[9]
+                });
+            });
+            
+            return map;
+        }
+        
+        function createActionTrackerMap(data) {
+            const map = {};
+            const rows = data.slice(1).filter(row => row && row[1]);
+            
+            rows.forEach(row => {
+                const site = row[1];
+                if (!map[site]) map[site] = [];
+                
+                map[site].push({
+                    projectCode: row[2],
+                    constructionStart: row[3],
+                    goLive: row[4],
+                    regionalPlanner: row[5],
+                    detailsImpact: row[6],
+                    openActions: row[7],
+                    status: row[8],
+                    owner: row[9],
+                    additionalInfo: row[10]
+                });
+            });
+            
+            return map;
+        }
+        
+        function createRiskReasonsMap(data) {
+            const map = {};
+            const rows = data.slice(1).filter(row => row && row[0]);
+            
+            rows.forEach(row => {
+                const site = row[0];
+                if (!map[site]) map[site] = [];
+                
+                map[site].push({
+                    project: row[1],
+                    projectCode: row[2],
+                    risk: row[3],
+                    narrative: row[4],
+                    currentStatus: row[5],
+                    goLiveForecast: row[8],
+                    engineeringLead: row[10]
+                });
+            });
+            
+            return map;
+        }
+        
+        function processSiteForMasterSheet(site, rampPlansMap, actionTrackerMap, riskReasonsMap) {
+            const rampPlansInfo = rampPlansMap[site] || [];
+            const actionTrackerInfo = actionTrackerMap[site] || [];
+            const riskReasonsInfo = riskReasonsMap[site] || [];
+            
+            const maxProjects = Math.max(rampPlansInfo.length, actionTrackerInfo.length, riskReasonsInfo.length, 1);
+            
+            for (let i = 0; i < maxProjects; i++) {
+                const rp = rampPlansInfo[i] || {};
+                const at = actionTrackerInfo[i] || {};
+                const rr = riskReasonsInfo[i] || {};
+                
+                // Consolidate Details & Impact
+                const detailsImpact = [
+                    rp.consolidatedNotes,
+                    at.detailsImpact,
+                    rr.narrative
+                ].filter(d => d).join(' | ');
+                
+                // Determine capacity impact
+                let capacityImpact = rp.capacityImpact || '';
+                const phasingPlanValue = String(rp.phasingPlan || '');
+                
+                if (!capacityImpact || capacityImpact === 'Pending' || String(capacityImpact).includes('TBD')) {
+                    if (phasingPlanValue && phasingPlanValue !== 'Pending' && !phasingPlanValue.includes('TBD') && !phasingPlanValue.includes('Missing')) {
+                        capacityImpact = '5 business days from phasing plan date';
+                    } else {
+                        capacityImpact = 'Blocked by phasing plan';
+                    }
+                }
+                
+                // Handle phasing plan updates
+                let phasingPlanNote = phasingPlanValue;
+                if (!phasingPlanNote || phasingPlanNote === 'Pending' || phasingPlanNote.includes('TBD') || phasingPlanNote.includes('Missing')) {
+                    const atsContact = rp.atsLaunch || 'ATS Launch POC';
+                    const engContact = rp.engineeringLead || rr.engineeringLead || 'Engineering Lead';
+                    phasingPlanNote = `${phasingPlanNote} - Request update from ${atsContact} and ${engContact}`;
+                }
+                
+                consolidatedData.masterSheet.push([
+                    site,
+                    rp.projectCode || at.projectCode || rr.projectCode || '',
+                    detailsImpact,
+                    rr.risk || '',
+                    rp.engineeringLead || rr.engineeringLead || '',
+                    rp.atsLaunch || '',
+                    rp.regionalPlanner || at.regionalPlanner || '',
+                    phasingPlanNote,
+                    capacityImpact,
+                    rp.rampPlan || ''
+                ]);
+            }
+        }
+        
+        function processSiteForActionTracker(site, rampPlansMap, actionTrackerMap, riskReasonsMap) {
+            const rampPlansInfo = rampPlansMap[site] || [];
+            const actionTrackerInfo = actionTrackerMap[site] || [];
+            const riskReasonsInfo = riskReasonsMap[site] || [];
+            
+            // Get unique projects for this site
+            const projectsMap = new Map();
+            
+            [...rampPlansInfo, ...actionTrackerInfo, ...riskReasonsInfo].forEach(info => {
+                const projectCode = info.projectCode || info.project || '';
+                if (projectCode && !projectsMap.has(projectCode)) {
+                    projectsMap.set(projectCode, {
+                        rampPlan: rampPlansInfo.find(rp => rp.projectCode === projectCode),
+                        actionTracker: actionTrackerInfo.find(at => at.projectCode === projectCode),
+                        riskReason: riskReasonsInfo.find(rr => rr.projectCode === projectCode || rr.project === projectCode)
+                    });
+                }
+            });
+            
+            // If no projects found, create at least one entry
+            if (projectsMap.size === 0) {
+                projectsMap.set('', {
+                    rampPlan: rampPlansInfo[0],
+                    actionTracker: actionTrackerInfo[0],
+                    riskReason: riskReasonsInfo[0]
+                });
+            }
+            
+            projectsMap.forEach((data, projectCode) => {
+                const rp = data.rampPlan || {};
+                const at = data.actionTracker || {};
+                const rr = data.riskReason || {};
+                
+                // Combine details from all sources
+                const detailsImpact = [
+                    rp.consolidatedNotes,
+                    at.detailsImpact,
+                    rr.narrative
+                ].filter(d => d).join(' | ');
+                
+                // Extract or generate open actions
+                let openActions = [];
+                
+                if (at.openActions) {
+                    openActions.push(at.openActions);
+                }
+                
+                if (rr.currentStatus) {
+                    openActions.push(`Current Status: ${rr.currentStatus}`);
+                }
+                
+                // If no actions, create default
+                if (openActions.length === 0) {
+                    openActions.push('Review and update project status');
+                }
+                
+                // Determine owner
+                const owner = at.owner || rp.engineeringLead || rr.engineeringLead || 'Engineering Project Lead';
+                
+                // Format actions with owner and ECD
+                openActions.forEach(action => {
+                    let formattedAction = action;
+                    if (!action.includes('Owner:') && !action.includes('ECD:')) {
+                        formattedAction = `${action} - Owner: ${owner}, ECD: TBD`;
+                    }
+                    
+                    consolidatedData.actionTracker.push([
+                        site,
+                        projectCode || rp.projectCode || at.projectCode || rr.projectCode || '',
+                        rp.constructionStart || at.constructionStart || '',
+                        rp.goLive || at.goLive || rr.goLiveForecast || '',
+                        rp.regionalPlanner || at.regionalPlanner || '',
+                        detailsImpact,
+                        formattedAction,
+                        at.status || 'Open',
+                        owner,
+                        at.additionalInfo || ''
+                    ]);
+                });
+            });
+        }
+        
+        function displayMasterSheet() {
+            const container = document.getElementById('masterTableContainer');
+            container.innerHTML = createTable(consolidatedData.masterSheet);
+        }
+        
+        function displayActionTracker() {
+            const container = document.getElementById('actionsTableContainer');
+            container.innerHTML = createTable(consolidatedData.actionTracker, true);
+        }
+        
+        function createTable(data, isActionTracker = false) {
+            let html = '<table>';
+            
+            // Header
+            html += '<thead><tr>';
+            data[0].forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead>';
+            
+            // Body
+            html += '<tbody>';
+            for (let i = 1; i < data.length; i++) {
+                html += '<tr>';
+                data[i].forEach((cell, index) => {
+                    let cellContent = cell || '';
+                    
+                    // Format status column in action tracker
+                    if (isActionTracker && index === 7) { // Status column
+                        const status = cellContent.toLowerCase();
+                        if (status === 'open') {
+                            cellContent = '<span class="status-open">Open</span>';
+                        } else if (status === 'closed') {
+                            cellContent = '<span class="status-closed">Closed</span>';
+                        } else if (status === 'ongoing') {
+                            cellContent = '<span class="status-ongoing">Ongoing</span>';
+                        } else if (status === 'wip') {
+                            cellContent = '<span class="status-wip">WIP</span>';
+                        } else if (status === 'pastdue') {
+                            cellContent = '<span class="status-pastdue">Past Due</span>';
+                        }
+                    }
+                    
+                    html += `<td>${cellContent}</td>`;
+                });
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            
+            return html;
+        }
+        
+        function updateStats() {
+            // Calculate statistics
+            const uniqueSites = new Set();
+            const uniqueProjects = new Set();
+            let openActionsCount = 0;
+            let missingPhasingCount = 0;
+            
+            // From master sheet
+            for (let i = 1; i < consolidatedData.masterSheet.length; i++) {
+                const row = consolidatedData.masterSheet[i];
+                uniqueSites.add(row[0]); // Site
+                if (row[1]) uniqueProjects.add(row[1]); // Project Code
+                
+                // Check for missing phasing plans
+                const phasingPlan = row[7];
+                if (phasingPlan && (phasingPlan.includes('Request update') || phasingPlan.includes('TBD') || phasingPlan.includes('Missing'))) {
+                    missingPhasingCount++;
+                }
+            }
+            
+            // From action tracker
+            for (let i = 1; i < consolidatedData.actionTracker.length; i++) {
+                const status = consolidatedData.actionTracker[i][7];
+                if (status && status.toLowerCase() === 'open') {
+                    openActionsCount++;
+                }
+            }
+            
+            // Update display
+            document.getElementById('totalSites').textContent = uniqueSites.size;
+            document.getElementById('totalProjects').textContent = uniqueProjects.size;
+            document.getElementById('openActions').textContent = openActionsCount;
+            document.getElementById('missingPhasing').textContent = missingPhasingCount;
+        }
+        
+        function downloadConsolidated() {
+            try {
+                // Check if data exists
+                if (!consolidatedData.masterSheet || consolidatedData.masterSheet.length <= 1) {
+                    alert('No data to download. Please process a file first.');
+                    return;
+                }
+                
+                console.log('Starting download process...');
+                console.log('Master sheet rows:', consolidatedData.masterSheet.length);
+                console.log('Action tracker rows:', consolidatedData.actionTracker.length);
+                
+                // Create a new workbook
+                const wb = XLSX.utils.book_new();
+                
+                // Clean function to remove HTML and ensure all cells are strings or numbers
+                const cleanCell = (cell) => {
+                    if (cell === null || cell === undefined) return '';
+                    if (typeof cell === 'string') {
+                        // Remove HTML tags
+                        return cell.replace(/<[^>]*>/g, '').trim();
+                    }
+                    if (typeof cell === 'number') return cell;
+                    if (cell instanceof Date) return cell.toLocaleDateString();
+                    return String(cell);
+                };
+                
+                // Process Master Sheet data
+                const cleanMasterData = [];
+                for (let i = 0; i < consolidatedData.masterSheet.length; i++) {
+                    const row = consolidatedData.masterSheet[i];
+                    const cleanRow = [];
+                    for (let j = 0; j < row.length; j++) {
+                        cleanRow.push(cleanCell(row[j]));
+                    }
+                    cleanMasterData.push(cleanRow);
+                }
+                
+                // Process Action Tracker data
+                const cleanActionData = [];
+                for (let i = 0; i < consolidatedData.actionTracker.length; i++) {
+                    const row = consolidatedData.actionTracker[i];
+                    const cleanRow = [];
+                    for (let j = 0; j < row.length; j++) {
+                        cleanRow.push(cleanCell(row[j]));
+                    }
+                    cleanActionData.push(cleanRow);
+                }
+                
+                console.log('Data cleaned successfully');
+                
+                // Create worksheets
+                const masterWs = XLSX.utils.aoa_to_sheet(cleanMasterData);
+                const actionWs = XLSX.utils.aoa_to_sheet(cleanActionData);
+                
+                // Set column widths
+                masterWs['!cols'] = [
+                    {wch: 15}, {wch: 30}, {wch: 60}, {wch: 12}, {wch: 25},
+                    {wch: 25}, {wch: 25}, {wch: 35}, {wch: 30}, {wch: 35}
+                ];
+                
+                actionWs['!cols'] = [
+                    {wch: 15}, {wch: 30}, {wch: 20}, {wch: 20}, {wch: 25},
+                    {wch: 60}, {wch: 50}, {wch: 15}, {wch: 25}, {wch: 40}
+                ];
+                
+                // Add sheets to workbook
+                XLSX.utils.book_append_sheet(wb, masterWs, "Master Consolidated");
+                XLSX.utils.book_append_sheet(wb, actionWs, "Action Tracker");
+                
+                console.log('Workbook created successfully');
+                
+                // Generate filename
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const filename = `Construction_Consolidated_${year}${month}${day}.xlsx`;
+                
+                console.log('Attempting to save file:', filename);
+                
+                // Try to write the file
+                XLSX.writeFile(wb, filename);
+                
+                console.log('File download initiated');
+                
+                // Show success message
+                showSuccessMessage('File downloaded successfully!');
+                
+            } catch (error) {
+                console.error('Download error details:', error);
+                alert('Error downloading file. Check console for details.\n' + error.toString());
+            }
+        }
+        
+        function showSuccessMessage(message) {
+            const existingMsg = document.querySelector('.success-message');
+            if (existingMsg) existingMsg.remove();
+            
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success-message';
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #48bb78;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+            `;
+            successMsg.textContent = '✅ ' + message;
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                successMsg.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => successMsg.remove(), 300);
+            }, 3000);
+        }
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
